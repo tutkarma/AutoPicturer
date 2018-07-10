@@ -53,7 +53,5 @@ if __name__ == '__main__':
     good_tags=set(['JJ','JJR','JJS','NN','NNP','NNS','NNPS'])
     candidates = extract_candidate_words(text, good_tags)
     res = textrank(words, candidates)
-    for cnt, word in enumerate(res):
-        if cnt > 4:
-            break
+    for (cnt, word) in zip(range(5), res):
         print(word[0])
