@@ -1,69 +1,79 @@
-import csv
-import json
-import collections
+import pandas as pd
+import numpy as np
+import itertools
+import gc
 
-dict_labels = collections.defaultdict(list)
-dict_urls = {}
-dict_tages = {}
-
-def get_labels(filename):
-    with open(filename, encoding='utf-8', newline='') as file:
-        reader = csv.DictReader(file, delimiter=',')
-        for line in reader:
-            dict_labels[line["LabelName"]].append(line["ImageID"])
-
-
-def get_urls(filename):
-    with open(filename, encoding='utf-8', newline='') as file:
-        reader = csv.DictReader(file, delimiter=',')
-        for line in reader:
-            dict_urls[line["ImageID"]] = line["OriginalURL"]
-
-
-def get_tages(filename):
-    with open(filename, encoding='utf-8', newline='') as file:
-        reader = csv.reader(file, delimiter=',')
-        for line in reader:
-            dict_tages[line[1]] = line[0]
-
-def save_to_json_file(file, data):
-    with open(file, 'w') as fp:
-        json.dump(data, fp)
+def get_tag_lists(df):
+    keys, values = df.sort_values('Tag').values.T
+    ukeys, index = np.unique(keys,True)
+    arrays = np.split(values, index[1:])
+    df2 = pd.DataFrame({'Tag' : ukeys, 'URLs' : [list(itertools.chain.from_iterable(a)) for a in arrays]})
+    return df2
 
 
 if __name__ == "__main__":
-    get_labels("./data/humanLabels/test-annotations-human-imagelabels.csv")
-    get_labels("./data/humanLabels/train-annotations-human-imagelabels.csv")
-    get_labels("./data/humanLabels/validation-annotations-human-imagelabels.csv")
-    get_labels("./data/machineLabels/test-annotations-machine-imagelabels.csv")
-    get_labels("./data/machineLabels/train-annotations-machine-imagelabels.csv")
-    get_labels("./data/machineLabels/validation-annotations-machine-imagelabels.csv")
-    #get_labels("testlabels.csv")
-    dict_labels = dict(dict_labels)
+    label1 = pd.read_csv("./data/humanLabels/test-annotations-human-imagelabels.csv", sep=',', encoding='utf-8', usecols=['ImageID', 'LabelName'])
+    label2 = pd.read_csv("./data/humanLabels/train-annotations-human-imagelabels.csv", sep=',', encoding='utf-8', usecols=['ImageID', 'LabelName'])
+    label3 = pd.read_csv("./data/humanLabels/validation-annotations-human-imagelabels.csv", sep=',', encoding='utf-8', usecols=['ImageID', 'LabelName'])
+    label4 = pd.read_csv("./data/machineLabels/test-annotations-machine-imagelabels.csv", sep=',', encoding='utf-8', usecols=['ImageID', 'LabelName'])
+    label5 = pd.read_csv("./data/machineLabels/train-annotations-machine-imagelabels.csv", sep=',', encoding='utf-8', usecols=['ImageID', 'LabelName'])
+    label6 = pd.read_csv("./data/machineLabels/validation-annotations-machine-imagelabels.csv", sep=',', encoding='utf-8', usecols=['ImageID', 'LabelName'])
+    df_label = pd.concat([label1, label2, label3, label4, label5, label6])
+    del label1
+    label1 = pd.DataFrame()
+    gc.collect()
+    del label2
+    label2 = pd.DataFrame()
+    gc.collect()
+    del label3
+    label3 = pd.DataFrame()
+    gc.collect()
+    del label4
+    label4 = pd.DataFrame()
+    gc.collect()
+    del label5
+    label5 = pd.DataFrame()
+    gc.collect()
+    del label6
+    label6 = pd.DataFrame()
+    gc.collect()
+    #df_label = pd.read_csv("testlabels.csv", sep=',', encoding='utf-8')
     print("Labels are loaded")
 
-    get_urls("./data/imageIDs/test-images-with-rotation.csv")
-    get_urls("./data/imageIDs/train-images-with-labels-rotation.csv")
-    get_urls("./data/imageIDs/validation-images-with-rotation.csv")
-    #get_urls("testurls.csv")
+    url1 = pd.read_csv("./data/imageIDs/test-images-with-rotation.csv", sep=',', encoding='utf-8', usecols=['ImageID','OriginalURL'])
+    url2 = pd.read_csv("./data/imageIDs/train-images-with-labels-with-rotation.csv", sep=',', encoding='utf-8', usecols=['ImageID','OriginalURL'])
+    url3 = pd.read_csv("./data/imageIDs/validation-images-with-rotation.csv", sep=',', encoding='utf-8', usecols=['ImageID','OriginalURL'])
+    df_url = pd.concat([url1, url2, url3])
+
+    del url1
+    url1 = pd.DataFrame()
+    gc.collect()
+    del url2
+    url2 = pd.DataFrame()
+    gc.collect()
+    del url3
+    url3 = pd.DataFrame()
+    gc.collect()
+    #df_url = pd.read_csv("testurls.csv", sep=',', encoding='utf-8', usecols=['ImageID','OriginalURL'])
     print("URLs are loaded")
 
-    get_tages("./data/class-descriptions.csv")
-    #get_tages("testtages.csv")
-    print("Tages are loaded")
-
-    for label in dict_labels:
-        urls = []
-        for imageID in dict_labels[label]:
-            urls.append(dict_urls[imageID])
-        dict_labels[label] = urls
+    # imageID -> url
+    df_label['ImageID'] = df_label['ImageID'].map(df_url.set_index('ImageID')['OriginalURL'])
+    df_label.rename(columns={'ImageID': 'URL'}, inplace=True)
     print("IDs replaced with labels")
+    # label -- [urls]
+    df_label = df_label['URL'].groupby([df_label.LabelName]).apply(list).reset_index()
+    print("URLs concatinated")
 
-    for tag in dict_tages:
-        label = dict_tages[tag]
-        dict_tages[tag] = dict_labels[label]
+    df_tag = pd.read_csv("./data/class-descriptions.csv", sep=',', encoding='utf-8', names=['LabelName','Tag'])
+    print("Tags are loaded")
+    #df_tag = pd.read_csv("testtages.csv", sep=',', names=['LabelName','Tag'])
+    df_tag = df_tag[['Tag', 'LabelName']]
+    # tag -- [urls]
+    df_tag['LabelName'] = df_tag['LabelName'].map(df_label.set_index('LabelName')['URL'])
     print("Labels replaced with URLs")
+    df_tag.rename(columns={'LabelName': 'URLs'}, inplace=True)
+    df_tag = get_tag_lists(df_tag)
 
-    file_out = "./data/result.json"
-    save_to_json_file(file_out, dict_tages)
+    df_tag.set_index('Tag')['URLs'].to_json("D:/prac/server/data/result.json")
     print("Final file is saved")
