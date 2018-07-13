@@ -1,10 +1,16 @@
+import networkx as nx
+import re
+import sys
+import config
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk import word_tokenize, sent_tokenize, pos_tag_sents
 from itertools import takewhile, tee, chain
-import networkx as nx
-import re
-import sys
+from elasticsearch import Elasticsearch
+from flickrapi import FlickrAPI
+
+FLICKR_PUBLIC = config.FLICKR_CONFIG['FLICKR_PUBLIC']
+FLICKR_SECRET = config.FLICKR_CONFIG['FLICKR_SECRET']
 
 def textrank(words, candidates, n_keywords=0.05):
     graph = nx.Graph()
@@ -44,14 +50,27 @@ def extract_candidate_words(text, good_tags):
     candidates = [wnl.lemmatize(word) for word, tag in tagged_words if tag in good_tags and word not in stops]
     return candidates
 
-
-if __name__ == '__main__':
-    file_name = sys.argv[1]
-    with open(file_name, 'r', encoding='utf8') as f:
-        text = f.read().lower()
+def extract(text):
     words = [word for sent in sent_tokenize(text) for word in word_tokenize(sent)]
-    good_tags=set(['JJ','JJR','JJS','NN','NNP','NNS','NNPS'])
+    good_tags = set(['JJ', 'JJR', 'JJS', 'NN', 'NNP', 'NNS', 'NNPS'])
     candidates = extract_candidate_words(text, good_tags)
     res = textrank(words, candidates)
+    result = []
     for (cnt, word) in zip(range(5), res):
-        print(word[0])
+        result.append(word[0])
+    return result
+
+def search_tags(tags):
+    flickr = FlickrAPI(FLICKR_PUBLIC, FLICKR_SECRET, format='parsed-json')
+    extras='url_o'
+    text = " ".join(tags)
+    while tags:
+        request = flickr.photos.search(text=text, per_page=1, extras=extras)
+        if request['photos']['photo']:
+            break
+        else
+            tags.pop()
+            text = " ".join(tags)
+    #print(request['photos'])
+    print(request)
+    #return request['photos']['photo'][0]['url_o']
