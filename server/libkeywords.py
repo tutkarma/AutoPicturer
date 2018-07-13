@@ -53,6 +53,7 @@ def extract_candidate_words(text, good_tags):
     return candidates
 
 def extract(text):
+    text = text.lower()
     words = [word for sent in sent_tokenize(text) for word in word_tokenize(sent)]
     good_tags = set(['JJ', 'JJR', 'JJS', 'NN', 'NNP', 'NNS', 'NNPS'])
     candidates = extract_candidate_words(text, good_tags)

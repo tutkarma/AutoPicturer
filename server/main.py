@@ -1,7 +1,5 @@
 from flask import Flask
-
-import GetKeyWords
-import GetPicture
+from libkeywords import extract, search_tags
 
 app = Flask(__name__)
 
@@ -11,12 +9,11 @@ def index():
 
 if __name__ == '__main__':
     app.run(debug=True)
-    fileName = input()
+    file_name = input()
 
-    with open(fileName, 'r', encoding='utf8') as f:
-        text = f.read().lower()
+    with open(file_name, 'r', encoding='utf8') as f:
+        text = f.read()
 
-    tags = GetKeyWords.Extract(text)
-    print(tags)
-    url = GetPicture.FromURL([tags[0], tags[1]])
+    tags = extract(text)
+    url = search_tags(tags)
     print(url)
