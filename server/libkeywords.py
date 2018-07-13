@@ -1,12 +1,14 @@
 import networkx as nx
 import re
 import sys
+import itertools
+import time
 import config
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk import word_tokenize, sent_tokenize, pos_tag_sents
 from itertools import takewhile, tee, chain
-from elasticsearch import Elasticsearch
+#from elasticsearch import Elasticsearch
 from flickrapi import FlickrAPI
 
 FLICKR_PUBLIC = config.FLICKR_CONFIG['FLICKR_PUBLIC']
@@ -60,17 +62,26 @@ def extract(text):
         result.append(word[0])
     return result
 
+def get_subset_tags(tags):
+    subsets_tags = []
+    for i in range(1, len(tags) + 1):
+        new_set = [list(x) for x in itertools.combinations(tags, i)]
+        subsets_tags = new_set + subsets_tags
+    return subsets_tags
+
 def search_tags(tags):
     flickr = FlickrAPI(FLICKR_PUBLIC, FLICKR_SECRET, format='parsed-json')
     extras='url_o'
     text = " ".join(tags)
-    while tags:
+    subsets_tags = get_subset_tags(tags)
+    while subsets_tags:
+        cur_tags = subsets_tags.pop(0)
+        text = " ".join(cur_tags)
+        time.sleep(1)
         request = flickr.photos.search(text=text, per_page=1, extras=extras)
-        if request['photos']['photo']:
+        if request['photos']['photo'] and request['photos']['photo'][0].has_key(extras):
+            print(cur_tags)
             break
-        else
-            tags.pop()
-            text = " ".join(tags)
-    #print(request['photos'])
-    print(request)
-    #return request['photos']['photo'][0]['url_o']
+
+    #print(request)
+    return request['photos']['photo'][0]['url_o']
