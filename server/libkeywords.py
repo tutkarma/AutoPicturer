@@ -80,7 +80,7 @@ def search_tags(tags):
         text = " ".join(cur_tags)
         time.sleep(1)
         request = flickr.photos.search(text=text, per_page=1, extras=extras)
-        if request['photos']['photo'] and request['photos']['photo'][0].has_key(extras):
+        if request['photos']['photo'] and extras in request['photos']['photo'][0]:
             print(cur_tags)
             break
 
