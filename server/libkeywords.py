@@ -75,14 +75,24 @@ def search_tags(tags):
     extras='url_o'
     text = " ".join(tags)
     subsets_tags = get_subset_tags(tags)
+    answer = []
+    cnt = 0
     while subsets_tags:
         cur_tags = subsets_tags.pop(0)
         text = " ".join(cur_tags)
         time.sleep(1)
-        request = flickr.photos.search(text=text, per_page=1, extras=extras)
-        if request['photos']['photo'] and request['photos']['photo'][0].has_key(extras):
-            print(cur_tags)
+        request = flickr.photos.search(text=text, per_page=5, extras=extras)
+        for i in range(5):
+            if request['photos']['photo'] and extras in request['photos']['photo'][i] and \
+                request['photos']['photo'][i]['height_o'] != '494' and request['photos']['photo'][i]['width_o'] != '800':
+                #print(cur_tags)
+                #answer = request['photos']['photo'][0]['url_o']
+                if request['photos']['photo'][i]['url_o'] not in answer:
+                    answer.append(request['photos']['photo'][i]['url_o'])
+                    cnt += 1
+                if cnt == 5:
+                    break
+        if cnt == 5:
             break
 
-    #print(request)
-    return request['photos']['photo'][0]['url_o']
+    return answer
