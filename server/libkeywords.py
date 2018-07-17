@@ -85,8 +85,6 @@ def search_tags(tags):
         for i in range(5):
             if request['photos']['photo'] and extras in request['photos']['photo'][i] and \
                 request['photos']['photo'][i]['height_o'] != '494' and request['photos']['photo'][i]['width_o'] != '800':
-                #print(cur_tags)
-                #answer = request['photos']['photo'][0]['url_o']
                 if request['photos']['photo'][i]['url_o'] not in answer:
                     answer.append(request['photos']['photo'][i]['url_o'])
                     cnt += 1
