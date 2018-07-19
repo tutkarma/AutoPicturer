@@ -10,6 +10,7 @@ from nltk import word_tokenize, sent_tokenize, pos_tag_sents
 from itertools import takewhile, tee, chain
 #from elasticsearch import Elasticsearch
 from flickrapi import FlickrAPI
+from googletrans import Translator
 
 FLICKR_PUBLIC = config.FLICKR_CONFIG['FLICKR_PUBLIC']
 FLICKR_SECRET = config.FLICKR_CONFIG['FLICKR_SECRET']
@@ -52,7 +53,14 @@ def extract_candidate_words(text, good_tags):
     candidates = [wnl.lemmatize(word) for word, tag in tagged_words if tag in good_tags and word not in stops]
     return candidates
 
+def text_translate(translator, text):
+    return translator.translate(text, dest='en').text
+
 def extract(text):
+    translator = Translator()
+    language = translator.detect(text)
+    if language.lang == "ru":
+        text = text_translate(translator, text)
     text = text.lower()
     words = [word for sent in sent_tokenize(text) for word in word_tokenize(sent)]
     good_tags = set(['JJ', 'JJR', 'JJS', 'NN', 'NNP', 'NNS', 'NNPS'])
