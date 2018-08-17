@@ -26,7 +26,7 @@ class Execute(Resource):
         EXECUTE['task'] = {'text': args['text']}
 
         tags = extract(args['text'])
-        url = search_tags(tags)
+        url =  search_tags(tags)
 
         return {'url' : url,
                 'tags': tags

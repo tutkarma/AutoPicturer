@@ -53,13 +53,13 @@ def extract_candidate_words(text, good_tags):
     candidates = [wnl.lemmatize(word) for word, tag in tagged_words if tag in good_tags and word not in stops]
     return candidates
 
-def text_translate(translator, text):
-    return translator.translate(text, dest='en').text
+def text_translate(translator, textt):
+    return translator.translate(textt, dest='en').text
 
 def extract(text):
     translator = Translator()
     language = translator.detect(text)
-    if language.lang == "ru":
+    if language.lang != "en":
         text = text_translate(translator, text)
     text = text.lower()
     words = [word for sent in sent_tokenize(text) for word in word_tokenize(sent)]
@@ -85,7 +85,7 @@ def search_tags(tags):
     subsets_tags = get_subset_tags(tags)
     answer = []
     cnt = 0
-    while subsets_tags:
+    while subsets_tags and cnt != 5:
         cur_tags = subsets_tags.pop(0)
         text = " ".join(cur_tags)
         time.sleep(1)
@@ -98,7 +98,4 @@ def search_tags(tags):
                     cnt += 1
                 if cnt == 5:
                     break
-        if cnt == 5:
-            break
-
     return answer
